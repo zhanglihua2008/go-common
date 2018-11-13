@@ -9,17 +9,17 @@ import (
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
+var globalLog *zap.SugaredLogger
+
+func setGlobalLog(v *zap.SugaredLogger) {
+	globalLog = v
+}
+
 func timeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.Format("2006-01-02 15:04:05.000"))
 }
 
-var callerSkip int = 1
-
-func SetCallerSkip(v int) {
-	callerSkip = v
-}
-
-func InitZapLogger(showConsole bool, serviceName string, logFilePath string) (*zap.Logger, error) {
+func InitZapLogger(showConsole bool, serviceName string, logFilePath string) (*zap.SugaredLogger, error) {
 
 	zCfg := zap.NewProductionConfig()
 	zCfg.EncoderConfig.TimeKey = "t"
@@ -32,7 +32,7 @@ func InitZapLogger(showConsole bool, serviceName string, logFilePath string) (*z
 	zCfg.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	zCfg.EncoderConfig.EncodeTime = timeEncoder
 	zCfg.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
-	zCfg.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	zCfg.EncoderConfig.EncodeCaller = zapcore.FullCallerEncoder //zapcore.ShortCallerEncoder
 
 	hook := &lumberjack.Logger{
 		Filename:   logFilePath,
@@ -66,8 +66,11 @@ func InitZapLogger(showConsole bool, serviceName string, logFilePath string) (*z
 		core = zapcore.NewCore(jsonEncoder, fileWriter, zap.DebugLevel)
 	}
 
-	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(callerSkip), zap.AddStacktrace(zapcore.ErrorLevel))
-	zap.ReplaceGlobals(logger)
+	logger := zap.New(core, zap.AddCaller(),
+		zap.AddCallerSkip(1),
+		zap.AddStacktrace(zapcore.ErrorLevel))
 
-	return logger, nil
+	sugarLog := logger.Sugar()
+	setGlobalLog(sugarLog)
+	return sugarLog, nil
 }

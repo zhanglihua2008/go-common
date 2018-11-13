@@ -38,20 +38,14 @@ func getLogParams(params ...interface{}) []zap.Field {
 	return fields
 }
 
-func Info(msg string, params ...interface{}) {
-	if len(params) >= 2 {
-		fields := getLogParams(params...)
-		zap.L().Info(msg, fields...)
-	} else {
-		zap.L().Info(msg)
-	}
+func Info(args ...interface{}) {
+	globalLog.Info(args...)
 }
 
-func Error(msg string, params ...interface{}) {
-	if len(params) >= 2 {
-		fields := getLogParams(params...)
-		zap.L().Error(msg, fields...)
-	} else {
-		zap.L().Error(msg)
-	}
+func Warn(args ...interface{}) {
+	globalLog.Warn(args...)
+}
+
+func Error(args ...interface{}) {
+	globalLog.Error(args...)
 }
