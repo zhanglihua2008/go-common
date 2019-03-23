@@ -6,6 +6,7 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"google.golang.org/grpc/grpclog"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -19,7 +20,7 @@ func timeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.Format("2006-01-02 15:04:05.000"))
 }
 
-func InitZapLogger(showConsole bool, serviceName string, logFilePath string) (*zap.SugaredLogger, error) {
+func InitZapLogger(showConsole bool, showGrpcLog bool, serviceName string, logFilePath string) (*zap.SugaredLogger, error) {
 
 	zCfg := zap.NewProductionConfig()
 	zCfg.EncoderConfig.TimeKey = "t"
@@ -64,6 +65,11 @@ func InitZapLogger(showConsole bool, serviceName string, logFilePath string) (*z
 		)
 	} else {
 		core = zapcore.NewCore(jsonEncoder, fileWriter, zap.DebugLevel)
+	}
+
+	if showGrpcLog {
+		// 使用zap输出grpc的日志
+		grpclog.SetLoggerV2(NewGRPCLoggerV2FromZapCore(core, fileWriter))
 	}
 
 	logger := zap.New(core, zap.AddCaller(),
