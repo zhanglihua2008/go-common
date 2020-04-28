@@ -12,10 +12,6 @@ import (
 
 var globalLog *zap.SugaredLogger
 
-func setGlobalLog(v *zap.SugaredLogger) {
-	globalLog = v
-}
-
 func timeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.Format("2006-01-02 15:04:05.000"))
 }
@@ -77,6 +73,23 @@ func InitZapLogger(showConsole bool, showGrpcLog bool, serviceName string, logFi
 		zap.AddStacktrace(zapcore.ErrorLevel))
 
 	sugarLog := logger.Sugar()
-	setGlobalLog(sugarLog)
-	return sugarLog, nil
+
+	globalLog = sugarLog
+	return globalLog, nil
+}
+
+func Debug(args ...interface{}) {
+	globalLog.Debug(args...)
+}
+
+func Info(args ...interface{}) {
+	globalLog.Info(args...)
+}
+
+func Warn(args ...interface{}) {
+	globalLog.Warn(args...)
+}
+
+func Error(args ...interface{}) {
+	globalLog.Error(args...)
 }
